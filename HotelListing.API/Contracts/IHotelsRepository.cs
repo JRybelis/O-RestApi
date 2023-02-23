@@ -1,8 +1,6 @@
 using HotelListing.API.Data;
 
-namespace HotelListing.API.Contracts
+namespace HotelListing.API.Contracts;
+public interface IHotelsRepository : IGenericRepository<Hotel>
 {
-    public interface IHotelsRepository : IGenericRepository<Hotel>
-    {
-    }
 }

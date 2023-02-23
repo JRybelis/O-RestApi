@@ -1,7 +1,5 @@
-namespace HotelListing.API.Models.Country
+namespace HotelListing.API.Models.Country;
+public class CreateCountryDto : BaseCountryDto
 {
-    public class CreateCountryDto : BaseCountryDto
-    {
-        
-    }
+    
 }

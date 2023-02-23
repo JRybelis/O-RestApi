@@ -1,7 +1,5 @@
-namespace HotelListing.API.Models.Hotel
+namespace HotelListing.API.Models.Hotel;
+public class UpdateHotelDto : BaseHotelDto
 {
-    public class UpdateHotelDto : BaseHotelDto
-    {
-        public int Id { get; set; }
-    }
+    public int Id { get; set; }
 }

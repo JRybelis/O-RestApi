@@ -1,15 +1,13 @@
 using HotelListing.API.Contracts;
 using HotelListing.API.Data;
 
-namespace HotelListing.API.Repository
+namespace HotelListing.API.Repository;
+public class HotelsRepository : GenericRepository<Hotel>, IHotelsRepository
 {
-    public class HotelsRepository : GenericRepository<Hotel>, IHotelsRepository
-    {
-        private readonly HotelListingDbContext _context;
+    private readonly HotelListingDbContext _context;
 
-        public HotelsRepository(HotelListingDbContext context) : base(context)
-        {
-            _context = context;
-        }
+    public HotelsRepository(HotelListingDbContext context) : base(context)
+    {
+        _context = context;
     }
 }
