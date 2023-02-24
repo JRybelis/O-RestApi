@@ -93,7 +93,8 @@ public class HotelsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteHotel(int id)
     {
-        var hotel = _hotelsRepository.GetAsync(id);
+        var hotel = await _hotelsRepository.GetAsync(id);
+        
         if (hotel is null)
             return NotFound();
         
