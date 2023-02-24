@@ -22,10 +22,10 @@ public class HotelsController : ControllerBase
 
     // GET: api/Hotels
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<GetHotelDto>>> GetHotels()
+    public async Task<ActionResult<IEnumerable<HotelDto>>> GetHotels()
     {
         var hotels = await _hotelsRepository.GetAllAsync();
-        var getHotelDtos = _mapper.Map<List<GetHotelDto>>(hotels);
+        var getHotelDtos = _mapper.Map<List<HotelDto>>(hotels);
 
         return Ok(getHotelDtos);
     }
@@ -39,16 +39,16 @@ public class HotelsController : ControllerBase
         if (hotel is null)
             return NotFound();
 
-        var HotelDto = _mapper.Map<HotelDto>(hotel);
+        var hotelDto = _mapper.Map<HotelDto>(hotel);
 
-        return Ok(HotelDto);
+        return Ok(hotelDto);
     }
 
     // PUT: api/Hotels/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutHotel(int id, UpdateHotelDto updateHotelDto)
+    public async Task<IActionResult> PutHotel(int id, HotelDto hotelDto)
     {
-        if (id != updateHotelDto.Id)
+        if (id != hotelDto.Id)
             return BadRequest("Invalid record Id.");
         
         var hotel = await _hotelsRepository.GetAsync(id);
@@ -57,7 +57,7 @@ public class HotelsController : ControllerBase
             return NotFound();
         
         // sets hotel state to modified
-        _mapper.Map(updateHotelDto, hotel);
+        _mapper.Map(hotelDto, hotel);
 
         try
         {
@@ -80,13 +80,15 @@ public class HotelsController : ControllerBase
 
     // POST: api/Hotels
     [HttpPost]
-    public async Task<ActionResult<Hotel>> PostHotel(CreateHotelDto createHotelDto)
+    public async Task<ActionResult<Hotel>> PostHotel(CreateHotelDto hotelDto)
     {
-        var hotel = _mapper.Map<Hotel>(createHotelDto);
+        var hotel = _mapper.Map<Hotel>(hotelDto);
 
         await _hotelsRepository.AddAsync(hotel);
 
-        return CreatedAtAction("GetHotel", new { id = hotel.Id }, hotel);
+        var createdHotelDto = _mapper.Map<HotelDto>(hotel);
+
+        return CreatedAtAction("GetHotel", new { id = hotel.Id }, createdHotelDto);
     }
 
     // DELETE: api/Hotels/5

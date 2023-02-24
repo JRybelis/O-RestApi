@@ -14,8 +14,6 @@ public class MapperConfig : Profile
         CreateMap<Country, CountryDto>().ReverseMap();
         
         CreateMap<Hotel, CreateHotelDto>().ReverseMap();
-        CreateMap<Hotel, UpdateHotelDto>().ReverseMap();
-        CreateMap<Hotel, GetHotelDto>().ReverseMap();
         CreateMap<Hotel, HotelDto>().ReverseMap();
     }
 }
