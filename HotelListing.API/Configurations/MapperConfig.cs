@@ -18,5 +18,7 @@ public class MapperConfig : Profile
         CreateMap<Hotel, HotelDto>().ReverseMap();
 
         CreateMap<ApiUser, ApiUserDto>().ReverseMap();
+        CreateMap<ApiUser, GetUserDto>().ReverseMap();
+        CreateMap<ApiUser, GetDetailedUserDto>().ReverseMap();
     }
 }
