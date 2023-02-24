@@ -37,4 +37,20 @@ public class AuthenticationController : ControllerBase
 
         return Ok();
     }
+
+    // POST: api/Account/login
+    [HttpPost]
+    [Route("login")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
+    {
+        var isValidUser = await _authManager.Login(loginDto);
+
+        if (!isValidUser)
+            return Unauthorized(); // unauthenticated
+        
+        return Ok();
+    }
 }
