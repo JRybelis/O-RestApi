@@ -16,7 +16,7 @@ public class AuthenticationController : ControllerBase
         _authManager = authManager;
     }
 
-    // POST: api/Account/register
+    // POST: api/Authentication/register
     [HttpPost]
     [Route("register")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -39,7 +39,7 @@ public class AuthenticationController : ControllerBase
         return Ok();
     }
 
-    // POST: api/Account/login
+    // POST: api/Authentication/login
     [HttpPost]
     [Route("login")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -48,6 +48,22 @@ public class AuthenticationController : ControllerBase
     public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
     {
         var authResponse = await _authManager.Login(loginDto);
+
+        if (authResponse is null)
+            return Unauthorized(); // unauthenticated
+        
+        return Ok(authResponse);
+    }
+
+    // POST: api/Authentication/refreshToken
+    [HttpPost]
+    [Route("refreshToken")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult> RefreshToken([FromBody] AuthResponseDto request)
+    {
+        var authResponse = await _authManager.VerifyRefreshToken(request);
 
         if (authResponse is null)
             return Unauthorized(); // unauthenticated
