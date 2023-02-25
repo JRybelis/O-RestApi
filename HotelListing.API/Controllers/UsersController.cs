@@ -1,5 +1,7 @@
 using AutoMapper;
 using HotelListing.API.Contracts;
+using HotelListing.API.Exceptions;
+using HotelListing.API.Models;
 using HotelListing.API.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,61 +15,74 @@ public class UsersController : ControllerBase
 {
     private readonly IMapper _mapper;
     private readonly IUsersRepository _usersRepository;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(IMapper mapper, IUsersRepository usersRepository)
+    public UsersController(IMapper mapper, IUsersRepository usersRepository, 
+    ILogger<UsersController> logger)
     {
         _mapper = mapper;
         _usersRepository = usersRepository;
+        _logger = logger;
     }
 
-    // GET: api/Users
-    [HttpGet]
+    // GET: api/Users/GetAll
+    [HttpGet("GetAll")]
     public async Task<ActionResult<IEnumerable<GetUserDto>>> GetUsers()
     {
-        var users = await _usersRepository.GetAllAsync();
-        var getUserDtos = _mapper.Map<List<GetUserDto>>(users);
+        _logger.LogInformation($"Querying all users.");
+        var getUserDtos = await _usersRepository.GetAllAsync<GetUserDto>();
 
         return Ok(getUserDtos);
+    }
+
+    // GET: api/Users/?StartIndex=0&PageSize=25&PageNumber=1
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<GetUserDto>>> GetUsers([FromQuery]
+    QueryParameters queryParameters)
+    {
+        _logger.LogInformation($"Querying all users, limiting results to {queryParameters.PageSize}, starting from page {queryParameters.PageNumber}.");
+        var pagedUsersResult = await _usersRepository.GetAllAsync<GetUserDto>(queryParameters);
+
+        return Ok(pagedUsersResult);
     }
 
     // GET: api/Users/byName
     [HttpGet]
     [Route("byName")]
     public async Task<ActionResult<IEnumerable<GetUserDto>>> GetUsersByFirstAndLastName
-    ([FromBody]LookupUsersByNameDto lookupUsersByNameDto)
+    ([FromBody] LookupUsersByNameDto lookupUsersByNameDto)
     {
-        var users = await _usersRepository.GetUsersByFirstAndLastName(
+        _logger.LogInformation($"Querying all users by provided first and last names.");
+        var getUserDtos = await _usersRepository.GetUsersByFirstAndLastName(
             lookupUsersByNameDto.FirstName, lookupUsersByNameDto.LastName);
-
-        var getUserDtos = _mapper.Map<List<GetUserDto>>(users);
 
         return Ok(getUserDtos);
     }
 
     // GET: api/Users
     [HttpGet("byEmail")]
-    public async Task<ActionResult<GetDetailedUserDto>> GetUserByEmail([FromQuery] string email)
+    public async Task<ActionResult<GetDetailedUserDto>> GetUserByEmail
+    ([FromQuery] string email)
     {
-        var user = await _usersRepository.GetUserByEmail(email);
+        _logger.LogInformation($"Looking user {email} up.");
+        var detailedUserDto = await _usersRepository.GetUserByEmail(email);
 
-        if (user is null)
-            return NotFound();
-
-        var detailedUserDto = _mapper.Map<GetDetailedUserDto>(user);
+        if (detailedUserDto is null)
+            throw new NotFoundException(nameof(GetUserByEmail), email);
 
         return Ok(detailedUserDto);
     }
 
     // GET: api/Users
     [HttpGet("byUsername")]
-    public async Task<ActionResult<GetDetailedUserDto>> GetUserByUsername([FromQuery]string username)
+    public async Task<ActionResult<GetDetailedUserDto>> GetUserByUsername
+    ([FromQuery] string username)
     {
-        var user = await _usersRepository.GetUserByUsername(username);
+        _logger.LogInformation($"Looking user {username} up.");
+        var detailedUserDto = await _usersRepository.GetUserByUsername(username);
 
-        if (user is null)
-            return NotFound();
-
-        var detailedUserDto = _mapper.Map<GetDetailedUserDto>(user);
+        if (detailedUserDto is null)
+            throw new NotFoundException(nameof(GetUserByUsername), username);
 
         return Ok(detailedUserDto);
     }
@@ -79,21 +94,14 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
     {
-        var user = await _usersRepository.GetUserByUsername(updateRoleDto.Username);
-        var result = await _usersRepository.UpdateRole(user, updateRoleDto.SetAdminRole);
+        var getDetailedUserDto = await _usersRepository
+        .GetUserByUsername(updateRoleDto.Username);
+
+        var result = await _usersRepository
+        .UpdateRole(getDetailedUserDto, updateRoleDto.SetAdminRole);
         
         if(result.Errors.Any())
-        {
-            var errors = result.Errors.ToList();
-            if (updateRoleDto.SetAdminRole)
-            {
-                return BadRequest($"{errors.FirstOrDefault().Description}");
-            }
-            else 
-            {
-                return BadRequest($"{errors.FirstOrDefault().Description}");
-            }
-        }
+            throw new BadRequestException(nameof(UpdateRole), updateRoleDto.Username);
         
         return Ok();
     }

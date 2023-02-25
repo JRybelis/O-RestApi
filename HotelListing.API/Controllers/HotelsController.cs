@@ -2,6 +2,7 @@ using AutoMapper;
 using HotelListing.API.Contracts;
 using HotelListing.API.Data;
 using HotelListing.API.Exceptions;
+using HotelListing.API.Models;
 using HotelListing.API.Models.Hotel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,15 +27,25 @@ public class HotelsController : ControllerBase
         _logger = logger;
     }
 
-    // GET: api/Hotels
-    [HttpGet]
+    // GET: api/Hotels/GetAll
+    [HttpGet("GetAll")]
     public async Task<ActionResult<IEnumerable<HotelDto>>> GetHotels()
     {
         _logger.LogInformation($"Querying all hotels.");
-        var hotels = await _hotelsRepository.GetAllAsync();
-        var getHotelDtos = _mapper.Map<List<HotelDto>>(hotels);
+        var hotelDtos = await _hotelsRepository.GetAllAsync<HotelDto>();
 
-        return Ok(getHotelDtos);
+        return Ok(hotelDtos);
+    }
+
+    // GET: api/Hotels/?StartIndex=0&PageSize=25&PageNumber=1
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<HotelDto>>> GetPagedHotels
+    ([FromQuery] QueryParameters queryParameters)
+    {
+        _logger.LogInformation($"Querying all hotels, limiting results to {queryParameters.PageSize}, starting from page {queryParameters.PageNumber}.");
+        var pagedHotelsResult = await _hotelsRepository.GetAllAsync<HotelDto>(queryParameters);
+
+        return Ok(pagedHotelsResult);
     }
 
     // GET: api/Hotels/5
@@ -42,12 +53,10 @@ public class HotelsController : ControllerBase
     public async Task<ActionResult<HotelDto>> GetHotel(int id)
     {
         _logger.LogInformation($"Looking hotel {id} up.");
-        var hotel = await _hotelsRepository.GetAsync(id);
+        var hotelDto = await _hotelsRepository.GetHotel(id);
 
-        if (hotel is null)
-            return NotFound();
-
-        var hotelDto = _mapper.Map<HotelDto>(hotel);
+        if (hotelDto is null)
+            throw new NotFoundException(nameof(GetHotel), id);
 
         return Ok(hotelDto);
     }
@@ -60,9 +69,8 @@ public class HotelsController : ControllerBase
             throw new BadRequestException(nameof(PutHotel), id);
         
         var hotel = await _hotelsRepository.GetAsync(id);
-
         if (hotel is null)
-            throw new NotFoundException(nameof(GetHotel), id);
+            throw new NotFoundException(nameof(PutHotel), id);
         
         // sets hotel state to modified
         _mapper.Map(hotelDto, hotel);
@@ -91,8 +99,7 @@ public class HotelsController : ControllerBase
     public async Task<ActionResult<Hotel>> PostHotel(CreateHotelDto hotelDto)
     {
         var hotel = _mapper.Map<Hotel>(hotelDto);
-
-        await _hotelsRepository.AddAsync(hotel);
+        hotel = await _hotelsRepository.AddAsync(hotel);
 
         var createdHotelDto = _mapper.Map<HotelDto>(hotel);
 
@@ -105,9 +112,8 @@ public class HotelsController : ControllerBase
     public async Task<IActionResult> DeleteHotel(int id)
     {
         var hotel = await _hotelsRepository.GetAsync(id);
-        
         if (hotel is null)
-            throw new NotFoundException(nameof(GetHotel), id);
+            throw new NotFoundException(nameof(DeleteHotel), id);
         
         await _hotelsRepository.DeleteAsync(id);
 

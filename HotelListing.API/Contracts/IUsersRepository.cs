@@ -1,11 +1,14 @@
 using HotelListing.API.Data;
+using HotelListing.API.Models.Users;
 using Microsoft.AspNetCore.Identity;
 
 namespace HotelListing.API.Contracts;
 public interface IUsersRepository : IGenericRepository<ApiUser>
 {
-    Task<List<ApiUser>> GetUsersByFirstAndLastName(string firstName, string lastName);
-    Task<ApiUser> GetUserByEmail(string email);
-    Task<ApiUser> GetUserByUsername(string username);
-    Task<IdentityResult> UpdateRole(ApiUser user, bool setAdminRole);
+    Task<List<GetUserDto>> GetUsersByFirstAndLastName(string firstName, 
+    string lastName);
+    Task<GetDetailedUserDto> GetUserByEmail(string email);
+    Task<GetDetailedUserDto> GetUserByUsername(string username);
+    Task<IdentityResult> UpdateRole(GetDetailedUserDto detailedUserDto, 
+    bool setAdminRole);
 }

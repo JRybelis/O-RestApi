@@ -1,20 +1,26 @@
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using HotelListing.API.Contracts;
 using HotelListing.API.Data;
+using HotelListing.API.Exceptions;
+using HotelListing.API.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.API.Repository;
 public class GenericRepository<T> : IGenericRepository<T> where T : class
 {
     private readonly HotelListingDbContext _context;
+    private readonly IMapper _mapper;
 
-    public GenericRepository(HotelListingDbContext context)
+    public GenericRepository(HotelListingDbContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
     public async Task<T> GetAsync(int? id)
     {
         if (id is null)
-            return null;
+            throw new BadRequestException(nameof(GetAsync), id);
 
         return await _context.Set<T>().FindAsync(id);
     }
@@ -27,9 +33,33 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         return entity;
     }
 
-    public async Task<List<T>> GetAllAsync()
+    public async Task<List<TResult>> GetAllAsync<TResult>()
     {
-        return await _context.Set<T>().ToListAsync();
+        return await _context.Set<T>()
+        .ProjectTo<TResult>(_mapper.ConfigurationProvider)
+        .ToListAsync();
+    }
+
+    public async Task<PagedResult<TResult>> GetAllAsync<TResult>(QueryParameters queryParameters)
+    {
+        var totalSize = await _context.Set<T>().CountAsync();
+        
+        // skip to the position on the list of records on the table that the user provides
+        // take the required amount of records after it
+        // lookup specific mapper configuration and project it on the db
+        var records = await _context.Set<T>()
+            .Skip(queryParameters.PageNumber)
+            .Take(queryParameters.PageSize)
+            .ProjectTo<TResult>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        return new PagedResult<TResult>
+        {
+            Records = records,
+            PageNumber = queryParameters.PageNumber,
+            RecordNumber = queryParameters.PageSize,
+            TotalCount = totalSize
+        };
     }
     
     public async Task UpdateAsync(T entity)

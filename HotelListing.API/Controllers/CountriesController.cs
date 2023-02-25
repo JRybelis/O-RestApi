@@ -2,6 +2,7 @@ using AutoMapper;
 using HotelListing.API.Contracts;
 using HotelListing.API.Data;
 using HotelListing.API.Exceptions;
+using HotelListing.API.Models;
 using HotelListing.API.Models.Country;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,15 +27,27 @@ public class CountriesController : ControllerBase
         _logger = logger;
     }
 
-    // GET: api/Countries
-    [HttpGet]
+    // GET: api/Countries/GetAll
+    [HttpGet("GetAll")]
     public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
     {
         _logger.LogInformation($"Querying all countries.");
-        var countries = await _countriesRepository.GetAllAsync();
-        var getCountryDtos = _mapper.Map<List<GetCountryDto>>(countries);
+        var getCountryDtos = await _countriesRepository.GetAllAsync<GetCountryDto>();
 
         return Ok(getCountryDtos);
+    }
+
+    // GET: api/Countries/?StartIndex=0&PageSize=25&PageNumber=1
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<GetCountryDto>>> GetPagedCountries
+    ([FromQuery] QueryParameters queryParameters)
+    {
+        _logger.LogInformation($"Querying all countries, limiting results to {queryParameters.PageSize}, starting from page {queryParameters.PageNumber}.");
+
+        var pagedCountriesResult = await _countriesRepository
+        .GetAllAsync<GetCountryDto>(queryParameters);
+
+        return Ok(pagedCountriesResult);
     }
 
     // GET: api/Countries/5
@@ -42,12 +55,10 @@ public class CountriesController : ControllerBase
     public async Task<ActionResult<CountryDto>> GetCountry(int id)
     {
         _logger.LogInformation($"Looking country {id} up.");
-        var country = await _countriesRepository.GetDetails(id);
+        var countryDto = await _countriesRepository.GetCountryDetailed(id);
 
-        if (country is null)
+        if (countryDto is null)
             throw new NotFoundException(nameof(GetCountry), id);
-
-        var countryDto = _mapper.Map<CountryDto>(country);
 
         return Ok(countryDto);
     }
@@ -62,7 +73,7 @@ public class CountriesController : ControllerBase
 
         var country = await _countriesRepository.GetAsync(id);
         if (country is null)
-            throw new NotFoundException(nameof(GetCountry), id);
+            throw new NotFoundException(nameof(PutCountry), id);
 
 
         // sets country state to modified
@@ -90,13 +101,16 @@ public class CountriesController : ControllerBase
     // POST: api/Countries
     [HttpPost]
     [Authorize]
-    public async Task<ActionResult<Country>> PostCountry(CreateCountryDto createCountryDto)
+    public async Task<ActionResult<Country>> PostCountry(
+        CreateCountryDto createCountryDto)
     {
         var country = _mapper.Map<Country>(createCountryDto);
+        country = await _countriesRepository.AddAsync(country);
 
-        await _countriesRepository.AddAsync(country);
+        var createdCountryDto = _mapper.Map<GetCountryDto>(country);
 
-        return CreatedAtAction("GetCountry", new { id = country.Id }, country);
+        return CreatedAtAction("GetCountry", new { id = country.Id }, 
+        createdCountryDto);
     }
 
     // DELETE: api/Countries/5
@@ -106,8 +120,7 @@ public class CountriesController : ControllerBase
     {
         var country = await _countriesRepository.GetAsync(id);
         if (country is null)
-            throw new NotFoundException(nameof(GetCountry), id);
-
+            throw new NotFoundException(nameof(DeleteCountry), id);
 
         await _countriesRepository.DeleteAsync(id);
 
