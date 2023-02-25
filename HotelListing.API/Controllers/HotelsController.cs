@@ -1,6 +1,7 @@
 using AutoMapper;
 using HotelListing.API.Contracts;
 using HotelListing.API.Data;
+using HotelListing.API.Exceptions;
 using HotelListing.API.Models.Hotel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,17 +16,21 @@ public class HotelsController : ControllerBase
 {
     private readonly IMapper _mapper;
     private readonly IHotelsRepository _hotelsRepository;
+    private readonly ILogger<HotelsController> _logger;
 
-    public HotelsController(IMapper mapper, IHotelsRepository hotelsRepository)
+    public HotelsController(IMapper mapper, IHotelsRepository hotelsRepository,
+    ILogger<HotelsController> logger)
     {
         _mapper = mapper;
         _hotelsRepository = hotelsRepository;
+        _logger = logger;
     }
 
     // GET: api/Hotels
     [HttpGet]
     public async Task<ActionResult<IEnumerable<HotelDto>>> GetHotels()
     {
+        _logger.LogInformation($"Querying all hotels.");
         var hotels = await _hotelsRepository.GetAllAsync();
         var getHotelDtos = _mapper.Map<List<HotelDto>>(hotels);
 
@@ -36,6 +41,7 @@ public class HotelsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<HotelDto>> GetHotel(int id)
     {
+        _logger.LogInformation($"Looking hotel {id} up.");
         var hotel = await _hotelsRepository.GetAsync(id);
 
         if (hotel is null)
@@ -51,12 +57,12 @@ public class HotelsController : ControllerBase
     public async Task<IActionResult> PutHotel(int id, HotelDto hotelDto)
     {
         if (id != hotelDto.Id)
-            return BadRequest("Invalid record Id.");
+            throw new BadRequestException(nameof(PutHotel), id);
         
         var hotel = await _hotelsRepository.GetAsync(id);
 
         if (hotel is null)
-            return NotFound();
+            throw new NotFoundException(nameof(GetHotel), id);
         
         // sets hotel state to modified
         _mapper.Map(hotelDto, hotel);
@@ -69,7 +75,7 @@ public class HotelsController : ControllerBase
         {
             if (!await _hotelsRepository.Exists(id))
             {
-                return NotFound();
+                throw new NotFoundException(nameof(PutHotel), id);
             }
             else
             {
@@ -101,7 +107,7 @@ public class HotelsController : ControllerBase
         var hotel = await _hotelsRepository.GetAsync(id);
         
         if (hotel is null)
-            return NotFound();
+            throw new NotFoundException(nameof(GetHotel), id);
         
         await _hotelsRepository.DeleteAsync(id);
 

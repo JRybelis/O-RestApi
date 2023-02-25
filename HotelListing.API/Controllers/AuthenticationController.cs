@@ -10,10 +10,12 @@ namespace HotelListing.API.Controllers;
 public class AuthenticationController : ControllerBase
 {
     private readonly IAuthManager _authManager;
+    private readonly ILogger<AuthenticationController> _logger;
 
-    public AuthenticationController(IAuthManager authManager)
+    public AuthenticationController(IAuthManager authManager, ILogger<AuthenticationController> logger)
     {
         _authManager = authManager;
+        _logger = logger;
     }
 
     // POST: api/Authentication/register
@@ -24,6 +26,7 @@ public class AuthenticationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> Register([FromBody] ApiUserDto apiUserDto)
     {
+        _logger.LogInformation($"Registration attempt for {apiUserDto.Email}.");
         var errors = await _authManager.Register(apiUserDto);
 
         if (errors.Any())
@@ -47,11 +50,12 @@ public class AuthenticationController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
     {
+        _logger.LogInformation($"Login attempt for {loginDto.Email}.");
         var authResponse = await _authManager.Login(loginDto);
 
         if (authResponse is null)
             return Unauthorized(); // unauthenticated
-        
+    
         return Ok(authResponse);
     }
 

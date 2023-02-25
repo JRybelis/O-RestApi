@@ -1,6 +1,7 @@
 using AutoMapper;
 using HotelListing.API.Contracts;
 using HotelListing.API.Data;
+using HotelListing.API.Exceptions;
 using HotelListing.API.Models.Country;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,17 +15,22 @@ public class CountriesController : ControllerBase
 {
     private readonly IMapper _mapper;
     private readonly ICountriesRepository _countriesRepository;
+    private readonly ILogger<CountriesController> _logger;
 
-    public CountriesController(IMapper mapper, ICountriesRepository countriesRepository)
+    public CountriesController(IMapper mapper, 
+    ICountriesRepository countriesRepository, 
+    ILogger<CountriesController> logger)
     {
         _mapper = mapper;
         _countriesRepository = countriesRepository;
+        _logger = logger;
     }
 
     // GET: api/Countries
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
     {
+        _logger.LogInformation($"Querying all countries.");
         var countries = await _countriesRepository.GetAllAsync();
         var getCountryDtos = _mapper.Map<List<GetCountryDto>>(countries);
 
@@ -35,10 +41,11 @@ public class CountriesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<CountryDto>> GetCountry(int id)
     {
+        _logger.LogInformation($"Looking country {id} up.");
         var country = await _countriesRepository.GetDetails(id);
 
         if (country is null)
-            return NotFound();
+            throw new NotFoundException(nameof(GetCountry), id);
 
         var countryDto = _mapper.Map<CountryDto>(country);
 
@@ -51,12 +58,12 @@ public class CountriesController : ControllerBase
     public async Task<IActionResult> PutCountry(int id, UpdateCountryDto updateCountryDto)
     {
         if (id != updateCountryDto.Id)
-            return BadRequest("Invalid record Id.");
+            throw new BadRequestException(nameof(PutCountry), id);
 
         var country = await _countriesRepository.GetAsync(id);
-
         if (country is null)
-            return NotFound();
+            throw new NotFoundException(nameof(GetCountry), id);
+
 
         // sets country state to modified
         _mapper.Map(updateCountryDto, country);
@@ -69,7 +76,7 @@ public class CountriesController : ControllerBase
         {
             if (!await _countriesRepository.Exists(id))
             {
-                return NotFound();
+                throw new NotFoundException(nameof(PutCountry), id);
             }
             else
             {
@@ -99,7 +106,8 @@ public class CountriesController : ControllerBase
     {
         var country = await _countriesRepository.GetAsync(id);
         if (country is null)
-            return NotFound();
+            throw new NotFoundException(nameof(GetCountry), id);
+
 
         await _countriesRepository.DeleteAsync(id);
 
