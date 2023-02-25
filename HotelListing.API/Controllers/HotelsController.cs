@@ -6,6 +6,7 @@ using HotelListing.API.Models;
 using HotelListing.API.Models.Hotel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.API.Controllers;
@@ -29,6 +30,7 @@ public class HotelsController : ControllerBase
 
     // GET: api/Hotels/GetAll
     [HttpGet("GetAll")]
+    [EnableQuery]
     public async Task<ActionResult<IEnumerable<HotelDto>>> GetHotels()
     {
         _logger.LogInformation($"Querying all hotels.");
@@ -39,6 +41,7 @@ public class HotelsController : ControllerBase
 
     // GET: api/Hotels/?StartIndex=0&PageSize=25&PageNumber=1
     [HttpGet]
+    [EnableQuery]
     public async Task<ActionResult<PagedResult<HotelDto>>> GetPagedHotels
     ([FromQuery] QueryParameters queryParameters)
     {

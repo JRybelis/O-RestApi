@@ -6,6 +6,7 @@ using HotelListing.API.Models;
 using HotelListing.API.Models.Country;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.API.Controllers;
@@ -29,6 +30,7 @@ public class CountriesController : ControllerBase
 
     // GET: api/Countries/GetAll
     [HttpGet("GetAll")]
+    [EnableQuery]
     public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
     {
         _logger.LogInformation($"Querying all countries.");
@@ -39,6 +41,7 @@ public class CountriesController : ControllerBase
 
     // GET: api/Countries/?StartIndex=0&PageSize=25&PageNumber=1
     [HttpGet]
+    [EnableQuery]
     public async Task<ActionResult<PagedResult<GetCountryDto>>> GetPagedCountries
     ([FromQuery] QueryParameters queryParameters)
     {
