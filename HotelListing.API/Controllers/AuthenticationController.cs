@@ -6,7 +6,7 @@ namespace HotelListing.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-
+[ApiVersion("1.0")]
 public class AuthenticationController : ControllerBase
 {
     private readonly IAuthManager _authManager;
