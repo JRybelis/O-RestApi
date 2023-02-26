@@ -9,6 +9,5 @@ public interface IUsersRepository : IGenericRepository<ApiUser>
     string lastName);
     Task<GetDetailedUserDto> GetUserByEmail(string email);
     Task<GetDetailedUserDto> GetUserByUsername(string username);
-    Task<IdentityResult> UpdateRole(GetDetailedUserDto detailedUserDto, 
-    bool setAdminRole);
+    Task<IdentityResult> UpdateRole(UpdateRoleDto updateRoleDto);
 }

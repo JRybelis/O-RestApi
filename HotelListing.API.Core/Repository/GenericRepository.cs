@@ -5,29 +5,40 @@ using HotelListing.API.Core.Models;
 using HotelListing.API.Core.Models.Exceptions;
 using HotelListing.LIB;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace HotelListing.API.Core.Repository;
-public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : class
+public class GenericRepository<TEntity> 
+    : IGenericRepository<TEntity> where TEntity : class
 {
     private readonly HotelListingDbContext _context;
     private readonly IMapper _mapper;
+    private readonly ILogger<GenericRepository<TEntity>> _logger;
 
-    public GenericRepository(HotelListingDbContext context, IMapper mapper)
+    public GenericRepository(HotelListingDbContext context, IMapper mapper,
+    ILogger<GenericRepository<TEntity>> logger)
     {
         _context = context;
         _mapper = mapper;
+        _logger = logger;
     }
 
     public async Task<TEntity> GetAsync(int? id)
     {
-        if (id is null)
-            throw new NotFoundException(typeof(TEntity).Name, "No key provided.");
+        _logger.LogInformation($"Looking {nameof(TEntity)} {id} up.");
 
-        return await _context.Set<TEntity>().FindAsync(id);
+        var result = await _context.Set<TEntity>().FindAsync(id);
+        
+        if (result is null)
+            throw new NotFoundException(typeof(TEntity).Name, 
+            id.HasValue ? id : "No key provided.");
+
+        return result;
     }
 
     public async Task<TResult> GetAsync<TResult>(int? id)
     {
+        _logger.LogInformation($"Looking {nameof(TEntity)} {id} up.");
         var result = await _context.Set<TEntity>().FindAsync(id);
 
         if (result is null)
@@ -39,6 +50,7 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
 
     public async Task<List<TResult>> GetAllAsync<TResult>()
     {
+        _logger.LogInformation($"Querying all {nameof(TEntity)} records.");
         return await _context.Set<TEntity>()
         .ProjectTo<TResult>(_mapper.ConfigurationProvider)
         .ToListAsync();
@@ -48,6 +60,7 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
     {
         var totalSize = await _context.Set<TEntity>().CountAsync();
         
+        _logger.LogInformation($"Querying all {nameof(TEntity)} records, limiting results to {queryParameters.PageSize}, starting from page {queryParameters.PageNumber}.");
         // skip to the position on the list of records on the table that the user provides
         // take the required amount of records after it
         // lookup specific mapper configuration and project it on the db
@@ -80,7 +93,9 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
     {
         var entity = await GetAsync(id);
 
-        _mapper.Map(source, entity); // source => entity
+        // source => entity, changes entity state
+        _mapper.Map(source, entity); 
+
         _context.Update(entity);
         await _context.SaveChangesAsync();
     }

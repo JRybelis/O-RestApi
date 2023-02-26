@@ -29,7 +29,6 @@ public class UsersController : ControllerBase
     [HttpGet("GetAll")]
     public async Task<ActionResult<IEnumerable<GetUserDto>>> GetUsers()
     {
-        _logger.LogInformation($"Querying all users.");
         var getUserDtos = await _usersRepository.GetAllAsync<GetUserDto>();
 
         return Ok(getUserDtos);
@@ -40,7 +39,6 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<PagedResult<GetUserDto>>> GetUsers([FromQuery]
     QueryParameters queryParameters)
     {
-        _logger.LogInformation($"Querying all users, limiting results to {queryParameters.PageSize}, starting from page {queryParameters.PageNumber}.");
         var pagedUsersResult = await _usersRepository.GetAllAsync<GetUserDto>(queryParameters);
 
         return Ok(pagedUsersResult);
@@ -52,7 +50,6 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<IEnumerable<GetUserDto>>> GetUsersByFirstAndLastName
     ([FromBody] LookupUsersByNameDto lookupUsersByNameDto)
     {
-        _logger.LogInformation($"Querying all users by provided first and last names.");
         var getUserDtos = await _usersRepository.GetUsersByFirstAndLastName(
             lookupUsersByNameDto.FirstName, lookupUsersByNameDto.LastName);
 
@@ -64,11 +61,7 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<GetDetailedUserDto>> GetUserByEmail
     ([FromQuery] string email)
     {
-        _logger.LogInformation($"Looking user {email} up.");
         var detailedUserDto = await _usersRepository.GetUserByEmail(email);
-
-        if (detailedUserDto is null)
-            throw new NotFoundException(nameof(GetUserByEmail), email);
 
         return Ok(detailedUserDto);
     }
@@ -78,11 +71,7 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<GetDetailedUserDto>> GetUserByUsername
     ([FromQuery] string username)
     {
-        _logger.LogInformation($"Looking user {username} up.");
         var detailedUserDto = await _usersRepository.GetUserByUsername(username);
-
-        if (detailedUserDto is null)
-            throw new NotFoundException(nameof(GetUserByUsername), username);
 
         return Ok(detailedUserDto);
     }
@@ -94,14 +83,10 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
     {
-        var getDetailedUserDto = await _usersRepository
-        .GetUserByUsername(updateRoleDto.Username);
-
-        var result = await _usersRepository
-        .UpdateRole(getDetailedUserDto, updateRoleDto.SetAdminRole);
+        var result = await _usersRepository.UpdateRole(updateRoleDto);
         
         if(result.Errors.Any())
-            throw new BadRequestException(nameof(UpdateRole), updateRoleDto.Username);
+            throw new BadRequestException(nameof(UpdateRole), updateRoleDto.UserName);
         
         return Ok();
     }
