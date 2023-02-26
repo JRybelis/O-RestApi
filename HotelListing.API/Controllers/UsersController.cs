@@ -48,7 +48,7 @@ public class UsersController : ControllerBase
     [HttpGet]
     [Route("byName")]
     public async Task<ActionResult<IEnumerable<GetUserDto>>> GetUsersByFirstAndLastName
-    ([FromBody] LookupUsersByNameDto lookupUsersByNameDto)
+    ([FromQuery] LookupUsersByNameDto lookupUsersByNameDto)
     {
         var getUserDtos = await _usersRepository.GetUsersByFirstAndLastName(
             lookupUsersByNameDto.FirstName, lookupUsersByNameDto.LastName);
