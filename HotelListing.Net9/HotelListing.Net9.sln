@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HotelListing.Net9", "HotelListing.Net9\HotelListing.Net9.csproj", "{94E24649-E584-46E5-84C9-8C9B09585C8B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HotelListing.Net9.API", "HotelListing.Net9.API\HotelListing.Net9.API.csproj", "{94E24649-E584-46E5-84C9-8C9B09585C8B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

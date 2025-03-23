@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9.csproj": {}
+    "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9.csproj": {}
   },
   "projects": {
-    "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9.csproj": {
+    "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9.csproj",
+        "projectUniqueName": "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9.csproj",
         "projectName": "HotelListing.Net9",
-        "projectPath": "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9.csproj",
+        "projectPath": "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9.csproj",
         "packagesPath": "/home/jokeonabus/.nuget/packages/",
-        "outputPath": "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/HotelListing.Net9/obj/",
+        "outputPath": "/home/jokeonabus/RiderProjects/O-RestApi/HotelListing.Net9/HotelListing.Net9/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/jokeonabus/.nuget/NuGet/NuGet.Config"
@@ -46,6 +46,10 @@
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[9.0.2, )"
+            },
+            "Serilog.AspNetCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
             }
           },
           "imports": [
