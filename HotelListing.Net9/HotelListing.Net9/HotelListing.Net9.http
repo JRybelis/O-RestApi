@@ -1,0 +1,6 @@
+@HotelListing.Net9_HostAddress = http://localhost:5036
+
+GET {{HotelListing.Net9_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
