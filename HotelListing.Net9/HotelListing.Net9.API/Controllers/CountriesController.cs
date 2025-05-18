@@ -1,4 +1,6 @@
+using AutoMapper;
 using HotelListing.Net9.Data;
+using HotelListing.Net9.Models.Country;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,40 +8,47 @@ namespace HotelListing.Net9.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CountriesController(HotelListingDbContext context) : ControllerBase
+public class CountriesController(HotelListingDbContext context, IMapper mapper) : ControllerBase
 {
-    private readonly HotelListingDbContext _context = context;
-
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Country>>> GetCountries()
+    public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
     {
-        var countries = await _context.Countries.ToListAsync();
+        var countries = await context.Countries.ToListAsync();
+        var records = mapper.Map<List<GetCountryDto>>(countries);
         
-        return countries;
+        return Ok(records);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Country>> GetCountry(int id)
+    public async Task<ActionResult<CountryDto>> GetCountry(int id)
     {
-        var country = await _context.Countries.FindAsync(id);
+        var country = await context.Countries
+            .Include(q => q.Hotels)
+            .FirstOrDefaultAsync(q => q.Id == id);
 
         if (country is null)
             return NotFound();
         
-        return country;
+        var record = mapper.Map<CountryDto>(country);
+        
+        return Ok(record);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutCountry(int id, Country country)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> PutCountry(int id, UpdateCountryDto updateCountryDto)
     {
-        if (id != country.Id)
-            return BadRequest();
+        if (id != updateCountryDto.Id)
+            return BadRequest("Invalid record id.");
         
-        _context.Entry(country).State = EntityState.Modified;
+        var country = await context.Countries.FindAsync(id);
+        if (country is null)
+            return NotFound();
+        
+        mapper.Map(updateCountryDto, country); // sets country state to modified
 
         try
         {
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
         catch (Exception e)
         {
@@ -53,10 +62,11 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Country>> PostCountry(Country country)
+    public async Task<ActionResult<Country>> PostCountry(CreateCountryDto createCountryDto)
     {
-        _context.Countries.Add(country);
-        await _context.SaveChangesAsync();
+        var country = mapper.Map<Country>(createCountryDto);
+        context.Countries.Add(country);
+        await context.SaveChangesAsync();
         
         return CreatedAtAction("GetCountry", new { id = country.Id }, country);
     }
@@ -64,18 +74,18 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult<Country>> DeleteCountry(int id)
     {
-        var country = await _context.Countries.FindAsync(id);
+        var country = await context.Countries.FindAsync(id);
         if (country is null)
             return NotFound();
         
-        _context.Countries.Remove(country);
-        await _context.SaveChangesAsync();
+        context.Countries.Remove(country);
+        await context.SaveChangesAsync();
         
         return NoContent();
     }
 
     private bool CountryExists(int id)
     {
-        return _context.Countries.Any(e => e.Id == id);
+        return context.Countries.Any(e => e.Id == id);
     }
 }
