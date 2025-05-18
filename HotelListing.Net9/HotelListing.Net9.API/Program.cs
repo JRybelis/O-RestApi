@@ -1,5 +1,7 @@
 using HotelListing.Net9.Configurations;
+using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
+using HotelListing.Net9.Repository;
 using Serilog;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +18,8 @@ builder.Services.AddDbContext<HotelListingDbContext>(options =>
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddCors(options =>
 {
@@ -30,12 +34,16 @@ builder.Host.UseSerilog((ctx, lc) =>
 
 builder.Services.AddAutoMapper(typeof(MapperConfig));
 
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<ICountriesRepository, CountriesRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
