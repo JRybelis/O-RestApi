@@ -2,6 +2,7 @@ using HotelListing.Net9.Configurations;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
 using HotelListing.Net9.Repository;
+using Microsoft.AspNetCore.Identity;
 using Serilog;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,10 @@ builder.Services.AddDbContext<HotelListingDbContext>(options =>
 {
     options.UseSqlServer(connectionString);
 });
+
+builder.Services.AddIdentityCore<SystemUser>()
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<HotelListingDbContext>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
