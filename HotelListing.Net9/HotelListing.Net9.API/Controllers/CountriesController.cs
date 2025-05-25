@@ -2,6 +2,7 @@ using AutoMapper;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
 using HotelListing.Net9.Models.Country;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelListing.Net9.Controllers;
@@ -33,6 +34,7 @@ public class CountriesController(IMapper mapper, ICountriesRepository countriesR
     }
 
     [HttpPut("{id:int}")]
+    [Authorize]
     public async Task<IActionResult> PutCountry(int id, UpdateCountryDto updateCountryDto)
     {
         if (id != updateCountryDto.Id)
@@ -62,6 +64,7 @@ public class CountriesController(IMapper mapper, ICountriesRepository countriesR
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<Country>> PostCountry(CreateCountryDto createCountryDto)
     {
         var country = mapper.Map<Country>(createCountryDto);
@@ -71,6 +74,7 @@ public class CountriesController(IMapper mapper, ICountriesRepository countriesR
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<Country>> DeleteCountry(int id)
     {
         var country = await countriesRepository.GetAsync(id);

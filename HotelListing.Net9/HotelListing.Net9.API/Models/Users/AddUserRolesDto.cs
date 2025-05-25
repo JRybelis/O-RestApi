@@ -1,6 +1,7 @@
 namespace HotelListing.Net9.Models.Users;
 
-public class GetApiUserDto : BaseApiUserDto
+public class AddUserRolesDto
 {
     public int Id { get; set; }
+    public string[] Roles { get; set; }
 }

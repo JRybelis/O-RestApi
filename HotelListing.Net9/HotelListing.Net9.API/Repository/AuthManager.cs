@@ -28,14 +28,6 @@ public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConf
         return result.Errors;
     }
 
-    public async Task<IEnumerable<IdentityError>> AddUserToTeam(string id, string roleName)
-    {
-        var user = await GetApiUserByIdAsync(id);
-
-        var result = await userManager.AddToRoleAsync(user, roleName);
-
-        return result.Errors;
-    }
     public async Task<AuthResponseDto> Login(LoginApiUserDto userLoginDto)
     {
         var user = await userManager.FindByEmailAsync(userLoginDto.Email);
@@ -52,20 +44,7 @@ public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConf
             UserId = user.Id
         };
     }
-
-    public async Task<GetApiUserDto> GetApiUserByEmailAsync(string email)
-    {
-        var user = await userManager.FindByEmailAsync(email);
-        
-        return user == null ? null : mapper.Map<GetApiUserDto>(user);
-    }
     
-    public async Task<GetApiUserDto> GetUserAsync(string userEmail) =>
-        mapper.Map<GetApiUserDto>(await userManager.FindByEmailAsync(userEmail));
-    
-    private async Task<ApiUser> GetApiUserByIdAsync(string id) =>
-        await userManager.FindByIdAsync(id);
-
     private async Task<string> GenerateToken(ApiUser user)
     {
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]));

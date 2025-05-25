@@ -21,5 +21,6 @@ public class MapperConfig : Profile
         CreateMap<ApiUser, CreateApiUserDto>().ReverseMap();
         CreateMap<ApiUser, GetApiUserDto>().ReverseMap();
         CreateMap<ApiUser, LoginApiUserDto>().ReverseMap();
+        CreateMap<ApiUser, BaseApiUserDto>().ReverseMap();
     }
 }
