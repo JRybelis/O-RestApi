@@ -1,4 +1,3 @@
-using System.Text;
 using AutoMapper;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
@@ -11,6 +10,7 @@ namespace HotelListing.Net9.Controllers;
 
 [Microsoft.AspNetCore.Components.Route("api/[controller]")]
 [ApiController]
+[ApiVersion("1.0")]
 public class AccountsController(
     IMapper mapper,
     IAuthManager authManager,
