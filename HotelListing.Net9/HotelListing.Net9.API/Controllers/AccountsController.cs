@@ -11,7 +11,11 @@ namespace HotelListing.Net9.Controllers;
 
 [Microsoft.AspNetCore.Components.Route("api/[controller]")]
 [ApiController]
-public class AccountsController(IMapper mapper, IAuthManager authManager, IUsersRepository usersRepository, ILogger<AccountsController> logger) : ControllerBase
+public class AccountsController(
+    IMapper mapper,
+    IAuthManager authManager,
+    IUsersRepository usersRepository,
+    ILogger<AccountsController> logger) : ControllerBase
 {
     // api/Accounts/register
     [HttpPost]
@@ -24,27 +28,14 @@ public class AccountsController(IMapper mapper, IAuthManager authManager, IUsers
         logger.LogInformation("Registration attempt for {1}", createApiUserDto.Email);
         var errors = authManager.Register(createApiUserDto).Result.ToList();
 
-        try
-        {
-            if (!errors.Any()) return Ok();
+        if (!errors.Any()) return Ok();
 
-            foreach (var error in errors)
-            {
-                ModelState.AddModelError(error.Code, error.Description);
-            }
-
-            return BadRequest(ModelState);
-        }
-        catch (Exception e)
+        foreach (var error in errors)
         {
-            var message = new StringBuilder();
-            message.Append(("Something went wrong in the {1} during user registration attempt for {2}.",
-                nameof(Register), createApiUserDto.Email));
-            
-            logger.LogError(e, message.ToString());
-            
-            return Problem(message + " Please contact support for assistance.", statusCode:500);
+            ModelState.AddModelError(error.Code, error.Description);
         }
+
+        return BadRequest(ModelState);
     }
     
     // api/Accounts/login
@@ -57,23 +48,11 @@ public class AccountsController(IMapper mapper, IAuthManager authManager, IUsers
     public async Task<IActionResult> Login([FromBody] LoginApiUserDto loginApiUserDto)
     {
         logger.LogInformation("Login attempt for {1}.", loginApiUserDto.Email);
-        try
-        {
-            var authResponse = await authManager.Login(loginApiUserDto);
+        var authResponse = await authManager.Login(loginApiUserDto);
 
-            if (authResponse == null) return Unauthorized();
+        if (authResponse == null) return Unauthorized();
 
-            return Ok(authResponse);
-        }
-        catch (Exception e)
-        {
-            var message = new StringBuilder();
-            message.Append(("Something went wrong during the {1} attempt.", nameof(Login)));
-            
-            logger.LogError(e, message.ToString());
-
-            return Problem(message.ToString(), statusCode: 500);
-        }
+        return Ok(authResponse);
     }
     
     // api/Accounts/GetUserByUsername
@@ -156,17 +135,7 @@ public class AccountsController(IMapper mapper, IAuthManager authManager, IUsers
         
         mapper.Map(updateApiUserDto, user);
 
-        try
-        {
-            await usersRepository.UpdateAsync(user);
-        }
-        catch (Exception e)
-        {
-            if (!userExists)
-                return NotFound();
-
-            throw;
-        }
+        await usersRepository.UpdateAsync(user);
 
         return NoContent();
     }

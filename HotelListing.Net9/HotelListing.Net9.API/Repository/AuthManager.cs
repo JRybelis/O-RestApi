@@ -11,11 +11,11 @@ using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegiste
 
 namespace HotelListing.Net9.Repository;
 
-public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration, ApiUser? user, ILogger logger) : IAuthManager
+public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration, ILogger<AuthManager> logger) : IAuthManager
 {
-    private ApiUser? _user = user;
-    private const string loginProvider = "HotelListingApi";
-    private const string refreshToken = "RefreshToken";
+    private ApiUser? _user;
+    private const string LoginProvider = "HotelListingApi";
+    private const string RefreshToken = "RefreshToken";
 
     public async Task<IEnumerable<IdentityError>> Register(CreateApiUserDto userDto)
     {
@@ -81,11 +81,11 @@ public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConf
     
     public async Task<string> CreateRefreshToken()
     {
-        await userManager.RemoveAuthenticationTokenAsync(_user, loginProvider, refreshToken);
+        await userManager.RemoveAuthenticationTokenAsync(_user, LoginProvider, RefreshToken);
         
-        var newRefreshToken = await userManager.GenerateUserTokenAsync(_user, loginProvider, refreshToken);
+        var newRefreshToken = await userManager.GenerateUserTokenAsync(_user, LoginProvider, RefreshToken);
         
-        await userManager.SetAuthenticationTokenAsync(_user, loginProvider, refreshToken, newRefreshToken);
+        await userManager.SetAuthenticationTokenAsync(_user, LoginProvider, RefreshToken, newRefreshToken);
         
         return newRefreshToken; 
     }
@@ -103,7 +103,7 @@ public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConf
         }
         
         var isValidRefreshToken =
-            await userManager.VerifyUserTokenAsync(_user, loginProvider, refreshToken, request.RefreshToken);
+            await userManager.VerifyUserTokenAsync(_user, LoginProvider, RefreshToken, request.RefreshToken);
 
         if (isValidRefreshToken)
         {

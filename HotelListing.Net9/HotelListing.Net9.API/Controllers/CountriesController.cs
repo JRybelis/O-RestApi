@@ -1,6 +1,7 @@
 using AutoMapper;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
+using HotelListing.Net9.Exceptions;
 using HotelListing.Net9.Models.Country;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ namespace HotelListing.Net9.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CountriesController(IMapper mapper, ICountriesRepository countriesRepository, ILogger logger) : ControllerBase
+public class CountriesController(IMapper mapper, ICountriesRepository countriesRepository, ILogger<CountriesController> logger) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
@@ -26,10 +27,7 @@ public class CountriesController(IMapper mapper, ICountriesRepository countriesR
         var country = await countriesRepository.GetDetails(id);
 
         if (country is null)
-        {
-            logger.LogWarning("No record found in {1} with Id: {2}.", nameof(GetCountry), id);
-            return NotFound();
-        }
+            throw new NotFoundException(nameof(GetCountry), id);
         
         var record = mapper.Map<CountryDto>(country);
         
@@ -47,7 +45,7 @@ public class CountriesController(IMapper mapper, ICountriesRepository countriesR
         var countryExists = await CountryExists(id);
 
         if (!countryExists)
-            return NotFound();
+            throw new NotFoundException(nameof(PutCountry), id);
         
         mapper.Map(updateCountryDto, country); // sets country state to modified
 
@@ -83,7 +81,7 @@ public class CountriesController(IMapper mapper, ICountriesRepository countriesR
         var country = await countriesRepository.GetAsync(id);
         
         if (country is null)
-            return NotFound();
+            throw new NotFoundException(nameof(DeleteCountry), id);
         
         await countriesRepository.DeleteAsync(id);
         

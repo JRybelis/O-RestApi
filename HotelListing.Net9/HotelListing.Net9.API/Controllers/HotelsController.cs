@@ -45,18 +45,7 @@ public class HotelsController(IMapper mapper, IHotelsRepository hotelsRepository
             return NotFound();
         
         mapper.Map(hotelDto, hotel);
-
-        try
-        {
-            await hotelsRepository.UpdateAsync(hotel!);
-        }
-        catch (Exception e)
-        {
-            if (!hotelExists)
-                return NotFound();
-            
-            throw;
-        }
+        await hotelsRepository.UpdateAsync(hotel!);
         
         return NoContent();
     }

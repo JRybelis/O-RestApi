@@ -2,6 +2,7 @@ using System.Text;
 using HotelListing.Net9.Configurations;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
+using HotelListing.Net9.Middleware;
 using HotelListing.Net9.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -78,6 +79,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 
