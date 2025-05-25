@@ -1,3 +1,4 @@
+using System.Text;
 using AutoMapper;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
@@ -10,7 +11,7 @@ namespace HotelListing.Net9.Controllers;
 
 [Microsoft.AspNetCore.Components.Route("api/[controller]")]
 [ApiController]
-public class AccountsController(IMapper mapper, IAuthManager authManager, IUsersRepository usersRepository) : ControllerBase
+public class AccountsController(IMapper mapper, IAuthManager authManager, IUsersRepository usersRepository, ILogger<AccountsController> logger) : ControllerBase
 {
     // api/Accounts/register
     [HttpPost]
@@ -20,16 +21,59 @@ public class AccountsController(IMapper mapper, IAuthManager authManager, IUsers
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Register([FromBody] CreateApiUserDto createApiUserDto)
     {
-        var errors = await authManager.Register(createApiUserDto);
+        logger.LogInformation("Registration attempt for {1}", createApiUserDto.Email);
+        var errors = authManager.Register(createApiUserDto).Result.ToList();
 
-        if (!errors.Any()) return Ok();
-        
-        foreach (var error in errors)
+        try
         {
-            ModelState.AddModelError(error.Code, error.Description);
+            if (!errors.Any()) return Ok();
+
+            foreach (var error in errors)
+            {
+                ModelState.AddModelError(error.Code, error.Description);
+            }
+
+            return BadRequest(ModelState);
         }
+        catch (Exception e)
+        {
+            var message = new StringBuilder();
+            message.Append(("Something went wrong in the {1} during user registration attempt for {2}.",
+                nameof(Register), createApiUserDto.Email));
             
-        return BadRequest(ModelState);
+            logger.LogError(e, message.ToString());
+            
+            return Problem(message + " Please contact support for assistance.", statusCode:500);
+        }
+    }
+    
+    // api/Accounts/login
+    [HttpPost]
+    [Route("login")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Login([FromBody] LoginApiUserDto loginApiUserDto)
+    {
+        logger.LogInformation("Login attempt for {1}.", loginApiUserDto.Email);
+        try
+        {
+            var authResponse = await authManager.Login(loginApiUserDto);
+
+            if (authResponse == null) return Unauthorized();
+
+            return Ok(authResponse);
+        }
+        catch (Exception e)
+        {
+            var message = new StringBuilder();
+            message.Append(("Something went wrong during the {1} attempt.", nameof(Login)));
+            
+            logger.LogError(e, message.ToString());
+
+            return Problem(message.ToString(), statusCode: 500);
+        }
     }
     
     // api/Accounts/GetUserByUsername
@@ -143,22 +187,6 @@ public class AccountsController(IMapper mapper, IAuthManager authManager, IUsers
         await usersRepository.DeleteAsync(id);
 
         return NoContent();
-    }
-
-    // api/Accounts/login
-    [HttpPost]
-    [Route("login")]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Login([FromBody] LoginApiUserDto loginApiUserDto)
-    {
-        var authResponse = await authManager.Login(loginApiUserDto);
-
-        if (authResponse == null) return Unauthorized();
-
-        return Ok(authResponse);
     }
     
     // api/Accounts/refreshToken

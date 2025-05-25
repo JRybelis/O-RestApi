@@ -11,7 +11,7 @@ using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegiste
 
 namespace HotelListing.Net9.Repository;
 
-public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration, ApiUser? user) : IAuthManager
+public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration, ApiUser? user, ILogger logger) : IAuthManager
 {
     private ApiUser? _user = user;
     private const string loginProvider = "HotelListingApi";
@@ -34,18 +34,21 @@ public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConf
 
     public async Task<AuthResponseDto?> Login(LoginApiUserDto userLoginDto)
     {
+        logger.LogInformation("Looking for user with email {1}.", userLoginDto.Email);
         _user = await userManager.FindByEmailAsync(userLoginDto.Email);
         if (_user == null) return null;
         
         var isValidUser =  await userManager.CheckPasswordAsync(_user, userLoginDto.Password);
-        if (!isValidUser) return null;
+        if (!isValidUser) {return null;}
             
         var token = await GenerateToken();
-
+        logger.LogInformation("Token generated for user {1} | Token: {2}.", userLoginDto.Email, token);
+        
         return new AuthResponseDto()
         {
             Token = token,
-            UserId = _user.Id
+            UserId = _user.Id,
+            RefreshToken = await CreateRefreshToken() 
         };
     }
 

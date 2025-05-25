@@ -9,7 +9,7 @@ namespace HotelListing.Net9.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CountriesController(IMapper mapper, ICountriesRepository countriesRepository) : ControllerBase
+public class CountriesController(IMapper mapper, ICountriesRepository countriesRepository, ILogger logger) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
@@ -26,7 +26,10 @@ public class CountriesController(IMapper mapper, ICountriesRepository countriesR
         var country = await countriesRepository.GetDetails(id);
 
         if (country is null)
+        {
+            logger.LogWarning("No record found in {1} with Id: {2}.", nameof(GetCountry), id);
             return NotFound();
+        }
         
         var record = mapper.Map<CountryDto>(country);
         
