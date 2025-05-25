@@ -161,6 +161,22 @@ public class AccountsController(IMapper mapper, IAuthManager authManager, IUsers
         return Ok(authResponse);
     }
     
+    // api/Accounts/refreshToken
+    [HttpPost]
+    [Route("refreshToken")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RefreshToken([FromBody] AuthResponseDto request)
+    {
+        var authResponse = await authManager.VerifyRefreshToken(request);
+
+        if (authResponse == null) return Unauthorized();
+
+        return Ok(authResponse);
+    }
+    
     private async Task<bool> UserExists(int id)
     {
         return await usersRepository.ExistsAsync(id);
