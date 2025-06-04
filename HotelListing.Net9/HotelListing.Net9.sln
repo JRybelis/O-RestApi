@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HotelListing.Net9.API", "HotelListing.Net9.API\HotelListing.Net9.API.csproj", "{94E24649-E584-46E5-84C9-8C9B09585C8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HotelListingApiUnitTests", "HotelListingApiUnitTests\HotelListingApiUnitTests.csproj", "{C8B31828-093C-4AEF-BA1E-C5368011038E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{94E24649-E584-46E5-84C9-8C9B09585C8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94E24649-E584-46E5-84C9-8C9B09585C8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94E24649-E584-46E5-84C9-8C9B09585C8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8B31828-093C-4AEF-BA1E-C5368011038E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8B31828-093C-4AEF-BA1E-C5368011038E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8B31828-093C-4AEF-BA1E-C5368011038E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8B31828-093C-4AEF-BA1E-C5368011038E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
