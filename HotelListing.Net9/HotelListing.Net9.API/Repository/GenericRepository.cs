@@ -1,23 +1,47 @@
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
+using HotelListing.Net9.Exceptions;
+using HotelListing.Net9.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.Net9.Repository;
 
-public class GenericRepository<T>(HotelListingDbContext context) : IGenericRepository<T>
+public class GenericRepository<T>(HotelListingDbContext context, IMapper mapper) : IGenericRepository<T>
     where T : class
 {
     public async Task<T?> GetAsync(int? id)
     {
         if (id is null)
-            return null;
+            throw new NotFoundException(nameof(GetAsync), id);
         
         return await context.Set<T>().FindAsync(id);
     }
 
-    public async Task<List<T>> GetAllAsync()
+    public async Task<List<TResult>> GetAllAsync<TResult>()
     {
-        return await context.Set<T>().ToListAsync();
+        return await context.Set<T>()
+            .ProjectTo<TResult>(mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task<PagedResult<TResult>> GetAllAsync<TResult>(QueryParameters queryParameters)
+    {
+        var totalSize = await context.Set<T>().LongCountAsync();
+        var items = await context.Set<T>()
+            .Skip(queryParameters.StartIndex)
+            .Take(queryParameters.PageSize)
+            .ProjectTo<TResult>(mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        return new PagedResult<TResult>
+        {
+            Items = items,
+            PageNumber = queryParameters.PageNumber,
+            RecordNumber = queryParameters.PageSize,
+            TotalCount = totalSize
+        };
     }
 
     public async Task<T> AddAsync(T entity)
@@ -39,7 +63,7 @@ public class GenericRepository<T>(HotelListingDbContext context) : IGenericRepos
         if (await ExistsAsync(id))
         {
             var entity = await GetAsync(id);
-            context.Set<T>().Remove(entity);
+            context.Set<T>().Remove(entity!);
             await context.SaveChangesAsync();
         }
         else

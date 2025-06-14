@@ -1,6 +1,7 @@
 using AutoMapper;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
+using HotelListing.Net9.Models;
 using HotelListing.Net9.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -81,11 +82,32 @@ public class AccountsController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUsers()
     {
-        var users = await usersRepository.GetApiUsers();
-        if (!users.Any())
+        logger.LogInformation("Querying all users.");
+        var userDtos = await usersRepository.GetApiUsers();
+        if (!userDtos.Any())
             return NotFound();
         
-        return Ok(users);
+        return Ok(userDtos);
+    }
+    
+    // api/Accounts/GetUsers
+    [HttpGet]
+    [Route("GetAllCountriesPaged")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<GetApiUserDto>>> GetUsersPaged(
+        [FromQuery] QueryParameters queryParameters)
+    {
+        logger.LogInformation("Querying all users, limiting results to {0}, starting from page {1}.",
+            queryParameters.PageSize, queryParameters.PageNumber);
+        var pagedUsersResult = await usersRepository.GetAllAsync<GetApiUserDto>(queryParameters);
+        if (!pagedUsersResult.Items.Any())
+            return NotFound();
+        
+        return Ok(pagedUsersResult);
     }
     
     // api/Accounts/assignRoles
@@ -135,7 +157,7 @@ public class AccountsController(
         
         mapper.Map(updateApiUserDto, user);
 
-        await usersRepository.UpdateAsync(user);
+        await usersRepository.UpdateAsync(mapper.Map<ApiUser>(user));
 
         return NoContent();
     }

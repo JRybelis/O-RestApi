@@ -2,6 +2,7 @@ using AutoMapper;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
 using HotelListing.Net9.Exceptions;
+using HotelListing.Net9.Models;
 using HotelListing.Net9.Models.Country;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,28 +11,39 @@ namespace HotelListing.Net9.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class CountriesController(IMapper mapper, ICountriesRepository countriesRepository, ILogger<CountriesController> logger) : ControllerBase
+public class CountriesController(
+    IMapper mapper,
+    ICountriesRepository countriesRepository,
+    ILogger<CountriesController> logger) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
     {
-        var countries = await countriesRepository.GetAllAsync();
-        var records = mapper.Map<List<GetCountryDto>>(countries);
+        var getCountryDtos = await countriesRepository.GetAllAsync<GetCountryDto>();
         
-        return Ok(records);
+        return Ok(getCountryDtos);
+    }
+    
+    // GET: api/GetAllCountriesPaged/?StartIndex=0&pagesize=25&pagenumber=1
+    [HttpGet("GetAllCountriesPaged")]
+    public async Task<ActionResult<PagedResult<GetCountryDto>>> GetCountriesPaged(
+        [FromQuery] QueryParameters queryParameters)
+    {
+        var pagedCountriesResult = await countriesRepository.GetAllAsync<GetCountryDto>(queryParameters);
+        
+        return Ok(pagedCountriesResult);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<CountryDto>> GetCountry(int id)
     {
-        var country = await countriesRepository.GetDetails(id);
+        logger.LogInformation("Looking country {0} up", id);
+        var countryDto = await countriesRepository.GetCountryDetailed(id);
 
-        if (country is null)
+        if (countryDto is null)
             throw new NotFoundException(nameof(GetCountry), id);
         
-        var record = mapper.Map<CountryDto>(country);
-        
-        return Ok(record);
+        return Ok(countryDto);
     }
 
     [HttpPut("{id:int}")]
@@ -69,9 +81,10 @@ public class CountriesController(IMapper mapper, ICountriesRepository countriesR
     public async Task<ActionResult<Country>> PostCountry(CreateCountryDto createCountryDto)
     {
         var country = mapper.Map<Country>(createCountryDto);
-        await countriesRepository.AddAsync(country);
+        country = await countriesRepository.AddAsync(country);
         
-        return CreatedAtAction("GetCountry", new { id = country.Id }, country);
+        return CreatedAtAction("GetCountry", new { id = country.Id }, 
+            mapper.Map<CountryDto>(country));
     }
 
     [HttpDelete("{id}")]

@@ -8,6 +8,6 @@ public interface IUsersRepository : IGenericRepository<ApiUser>
 {
     Task<IEnumerable<IdentityError>> AddUserToTeams(int id, string roleName);
     Task<GetApiUserDto?> GetApiUserByEmailAsync(string email);
-    Task<ApiUser?> GetApiUserByIdAsync(int id);
+    Task<GetApiUserDto?> GetApiUserByIdAsync(int id);
     Task<List<BaseApiUserDto?>?> GetApiUsers();
 }

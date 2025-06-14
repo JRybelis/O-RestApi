@@ -1,12 +1,17 @@
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
+using HotelListing.Net9.Models.Country;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.Net9.Repository;
 
-public class CountriesRepository(HotelListingDbContext context)
-    : GenericRepository<Country>(context), ICountriesRepository
+public class CountriesRepository(HotelListingDbContext context, IMapper mapper)
+    : GenericRepository<Country>(context, mapper), ICountriesRepository
 {
-    public async Task<Country> GetDetails(int id) =>
-        await context.Countries.Include(q => q.Hotels).FirstOrDefaultAsync(q => q.Id == id);
+    public async Task<CountryDto?> GetCountryDetailed(int id) =>
+        await context.Countries.Include(q => q.Hotels)
+            .ProjectTo<CountryDto>(mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(q => q.Id == id);
 }

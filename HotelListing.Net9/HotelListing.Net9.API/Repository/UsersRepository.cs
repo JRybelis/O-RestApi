@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 namespace HotelListing.Net9.Repository;
 
 public class UsersRepository(IMapper mapper, UserManager<ApiUser> userManager, HotelListingDbContext context)
-    : GenericRepository<ApiUser>(context), IUsersRepository
+    : GenericRepository<ApiUser>(context, mapper), IUsersRepository
 {
     public async Task<IEnumerable<IdentityError>> AddUserToTeams(int id, string roleName)
     {
-        var user = await GetApiUserByIdAsync(id);
+        var user = mapper.Map<ApiUser>(await GetApiUserByIdAsync(id));
         var result = await userManager.AddToRoleAsync(user, roleName);
 
         return result.Errors;
@@ -42,6 +42,10 @@ public class UsersRepository(IMapper mapper, UserManager<ApiUser> userManager, H
         return mapper.Map<GetApiUserDto>(user);
     }
     
-    public async Task<ApiUser?> GetApiUserByIdAsync(int id) =>
-        await userManager.FindByIdAsync(id.ToString());
+    public async Task<GetApiUserDto?> GetApiUserByIdAsync(int id)
+    {
+        var user = await userManager.FindByIdAsync(id.ToString());    
+        
+        return mapper.Map<GetApiUserDto>(user);
+    }
 }

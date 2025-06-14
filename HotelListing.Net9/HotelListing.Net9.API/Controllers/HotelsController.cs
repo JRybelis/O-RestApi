@@ -1,6 +1,8 @@
 using AutoMapper;
 using HotelListing.Net9.Contracts;
 using HotelListing.Net9.Data;
+using HotelListing.Net9.Exceptions;
+using HotelListing.Net9.Models;
 using HotelListing.Net9.Models.Hotel;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,28 +10,36 @@ namespace HotelListing.Net9.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class HotelsController(IMapper mapper, IHotelsRepository hotelsRepository) : ControllerBase
+public class HotelsController(IMapper mapper, IHotelsRepository hotelsRepository, ILogger<HotelsController> logger)
+    : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<HotelDto>>> GetHotels()
     {
-        var hotels = await hotelsRepository.GetAllAsync();
-        var records = mapper.Map<List<HotelDto>>(hotels);
+        logger.LogInformation("Querying all hotels.");
+        var hotelDtos = await hotelsRepository.GetAllAsync<HotelDto>();
         
-        return Ok(records);
+        return Ok(hotelDtos);
+    }
+    
+    [HttpGet]
+    public async Task<ActionResult<PagedResult<HotelDto>>> GetHotelsPaged([FromQuery] QueryParameters queryParameters)
+    {
+        logger.LogInformation("Querying all hotels, limiting results to {0}, starting from page {1}.", queryParameters.PageSize, queryParameters.PageNumber);
+        var pagedHotelsResult = await hotelsRepository.GetAllAsync<HotelDto>(queryParameters);
+        
+        return Ok(pagedHotelsResult);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<HotelDto>> GetHotel(int id)
     {
-        var hotel = await hotelsRepository.GetAsync(id);
+        var hotelDto = await hotelsRepository.GetHotelByIdAsync(id);
 
-        if (hotel is null)
-            return NotFound();
+        if (hotelDto is null)
+            throw new NotFoundException(nameof(GetHotel), id); 
         
-        var record = mapper.Map<HotelDto>(hotel);
-        
-        return Ok(record);
+        return Ok(hotelDto);
     }
 
     [HttpPut("{id:int}")]
@@ -38,12 +48,11 @@ public class HotelsController(IMapper mapper, IHotelsRepository hotelsRepository
         if (id != hotelDto.Id)
             return BadRequest("Invalid record id.");
         
-        var hotel = await hotelsRepository.GetAsync(id);
         var hotelExists = await HotelExists(id);
-
         if (!hotelExists)
-            return NotFound();
+            throw new NotFoundException(nameof(PutHotel), id);
         
+        var hotel = await hotelsRepository.GetAsync(id);
         mapper.Map(hotelDto, hotel);
         await hotelsRepository.UpdateAsync(hotel!);
         
@@ -62,10 +71,9 @@ public class HotelsController(IMapper mapper, IHotelsRepository hotelsRepository
     [HttpDelete("{id}")]
     public async Task<ActionResult<HotelDto>> DeleteHotel(int id)
     {
-        var hotel = await hotelsRepository.GetAsync(id);
-        
-        if (hotel is null)
-            return NotFound();
+        var hotelExists = await HotelExists(id);
+        if (!hotelExists)
+            throw new NotFoundException(nameof(DeleteHotel), id);
 
         await hotelsRepository.DeleteAsync(id);
 
