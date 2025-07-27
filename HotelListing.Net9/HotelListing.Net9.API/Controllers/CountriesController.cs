@@ -6,6 +6,7 @@ using HotelListing.Net9.Models;
 using HotelListing.Net9.Models.Country;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
 
 namespace HotelListing.Net9.Controllers;
 
@@ -17,6 +18,7 @@ public class CountriesController(
     ILogger<CountriesController> logger) : ControllerBase
 {
     [HttpGet]
+    [EnableQuery]
     public async Task<ActionResult<IEnumerable<GetCountryDto>>> GetCountries()
     {
         var getCountryDtos = await countriesRepository.GetAllAsync<GetCountryDto>();

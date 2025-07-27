@@ -92,7 +92,7 @@ public class AccountsController(
     
     // api/Accounts/GetUsers
     [HttpGet]
-    [Route("GetAllCountriesPaged")]
+    [Route("GetAllUsersPaged")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

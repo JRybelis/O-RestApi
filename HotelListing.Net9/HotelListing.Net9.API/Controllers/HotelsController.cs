@@ -22,7 +22,7 @@ public class HotelsController(IMapper mapper, IHotelsRepository hotelsRepository
         return Ok(hotelDtos);
     }
     
-    [HttpGet]
+    [HttpGet("GetAllHotelsPaged")]
     public async Task<ActionResult<PagedResult<HotelDto>>> GetHotelsPaged([FromQuery] QueryParameters queryParameters)
     {
         logger.LogInformation("Querying all hotels, limiting results to {0}, starting from page {1}.", queryParameters.PageSize, queryParameters.PageNumber);
