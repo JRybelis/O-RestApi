@@ -1,10 +1,10 @@
 using AutoMapper;
 using FakeItEasy;
 using FluentAssertions;
-using HotelListing.Net9.Data;
-using HotelListing.Net9.Models.Country;
-using HotelListing.Net9.Models.Hotel;
-using HotelListing.Net9.Repository;
+using HotelListing.Data;
+using HotelListing.Net9.API.Core.Models.Country;
+using HotelListing.Net9.API.Core.Models.Hotel;
+using HotelListing.Net9.API.Core.Repository;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
