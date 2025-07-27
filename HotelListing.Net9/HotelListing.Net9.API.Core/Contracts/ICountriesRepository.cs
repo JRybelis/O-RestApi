@@ -7,4 +7,3 @@ public interface ICountriesRepository : IGenericRepository<Country>
 {
     Task<CountryDto?> GetCountryDetailed(int id);
 }
-

@@ -1,10 +1,11 @@
 using AutoMapper;
 using HotelListing.Data;
 using HotelListing.Net9.API.Core.Contracts;
-using HotelListing.Net9.API.Core.Exceptions;
 using HotelListing.Net9.API.Core.Models;
 using HotelListing.Net9.API.Core.Models.Hotel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.Net9.Controllers;
 
@@ -31,14 +32,12 @@ public class HotelsController(IMapper mapper, IHotelsRepository hotelsRepository
         return Ok(pagedHotelsResult);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<HotelDto>> GetHotel(int id)
     {
+        logger.LogInformation("Looking hotel {0} up", id);
         var hotelDto = await hotelsRepository.GetHotelByIdAsync(id);
 
-        if (hotelDto is null)
-            throw new NotFoundException(nameof(GetHotel), id); 
-        
         return Ok(hotelDto);
     }
 
@@ -47,41 +46,42 @@ public class HotelsController(IMapper mapper, IHotelsRepository hotelsRepository
     {
         if (id != hotelDto.Id)
             return BadRequest("Invalid record id.");
-        
-        var hotelExists = await HotelExists(id);
-        if (!hotelExists)
-            throw new NotFoundException(nameof(PutHotel), id);
-        
-        var hotel = await hotelsRepository.GetAsync(id);
-        mapper.Map(hotelDto, hotel);
-        await hotelsRepository.UpdateAsync(hotel!);
+
+        try
+        {
+            await hotelsRepository.UpdateAsync<HotelDto, Hotel>(id, hotelDto);
+        }
+        catch (DbUpdateConcurrencyException e)
+        {
+            if (!await HotelExists(id))
+                return NotFound();
+            
+            throw;
+        }
         
         return NoContent();
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<HotelDto>> PostHotel(CreateHotelDto createHotelDto)
     {
-        var hotel = mapper.Map<Hotel>(createHotelDto);
-        await hotelsRepository.AddAsync(hotel);
+        var hotel = await hotelsRepository.AddAsync<CreateHotelDto, HotelDto>(createHotelDto);
         
-        return CreatedAtAction("GetHotel", new { id = hotel.Id }, mapper.Map<HotelDto>(hotel));
+        return CreatedAtAction(nameof(GetHotel), new { id = hotel.Id }, hotel);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<ActionResult<HotelDto>> DeleteHotel(int id)
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> DeleteHotel(int id)
     {
-        var hotelExists = await HotelExists(id);
-        if (!hotelExists)
-            throw new NotFoundException(nameof(DeleteHotel), id);
-
-        await hotelsRepository.DeleteAsync(id);
+        await hotelsRepository.DeleteAsync<Hotel>(id);
 
         return NoContent();
     }
 
     private async Task<bool> HotelExists(int id)
     {
-        return await hotelsRepository.ExistsAsync(id);
+        return await hotelsRepository.ExistsAsync<HotelDto>(id);
     }
 }

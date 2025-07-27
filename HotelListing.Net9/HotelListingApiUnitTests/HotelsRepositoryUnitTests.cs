@@ -64,7 +64,7 @@ public class HotelsRepositoryUnitTests : IDisposable, IAsyncDisposable
     public async Task GetAsync_WithVariousIds_ReturnsExpectedResult(int id, bool shouldExist, string? expectedName, int expectedCountryId)
     {
         // Act 
-        var result = await _repository.GetAsync(id);
+        var result = await _repository.GetAsync<HotelDto>(id);
         
         // Assert
         if (shouldExist)

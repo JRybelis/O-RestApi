@@ -6,6 +6,7 @@ using HotelListing.Net9.API.Core.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelListing.Net9.Controllers;
 
@@ -149,20 +150,22 @@ public class AccountsController(
         if (id != updateApiUserDto.Id)
             return BadRequest("User id mismatch.");
 
-        var user = await usersRepository.GetApiUserByIdAsync(id);
-        var userExists = await UserExists(id);
-
-        if (!userExists)
-            return NotFound();
-        
-        mapper.Map(updateApiUserDto, user);
-
-        await usersRepository.UpdateAsync(mapper.Map<ApiUser>(user));
+        try
+        {
+            await usersRepository.UpdateAsync<UpdateApiUserDto, GetApiUserDto?>(id, updateApiUserDto);
+        }
+        catch (DbUpdateConcurrencyException e)
+        {
+            if (!await UserExists(id))
+                return NotFound();
+            
+            throw;
+        }
 
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     [Authorize(Roles = "SuperAdmin")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -170,12 +173,7 @@ public class AccountsController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiUser>> DeleteUser(int id)
     {
-        var user = await usersRepository.GetApiUserByIdAsync(id);
-
-        if (user is null)
-            return NotFound();
-        
-        await usersRepository.DeleteAsync(id);
+        await usersRepository.DeleteAsync<ApiUser>(id);
 
         return NoContent();
     }
@@ -198,6 +196,6 @@ public class AccountsController(
     
     private async Task<bool> UserExists(int id)
     {
-        return await usersRepository.ExistsAsync(id);
+        return await usersRepository.ExistsAsync<GetApiUserDto>(id);
     }
 }

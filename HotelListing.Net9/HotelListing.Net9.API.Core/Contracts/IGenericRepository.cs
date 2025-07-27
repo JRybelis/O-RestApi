@@ -4,11 +4,11 @@ namespace HotelListing.Net9.API.Core.Contracts;
 
 public interface IGenericRepository<T> where T : class
 {
-    Task<T?> GetAsync(int? id);
+    Task<TResult> GetAsync<TResult>(int? id);
     Task<List<TResult>> GetAllAsync<TResult>();
     Task<PagedResult<TResult>> GetAllAsync<TResult>(QueryParameters queryParameters);
-    Task<T> AddAsync(T entity);
-    Task UpdateAsync(T entity);
-    Task DeleteAsync(int id);
-    Task<bool> ExistsAsync(int id);
+    Task<TResult> AddAsync<TSource, TResult>(TSource source);
+    Task UpdateAsync<TSource, TResult>(int id, TSource source);
+    Task DeleteAsync<TResult>(int id) where TResult : class;
+    Task<bool> ExistsAsync<TResult>(int id);
 }

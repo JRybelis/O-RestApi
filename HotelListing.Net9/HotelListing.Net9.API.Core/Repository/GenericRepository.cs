@@ -11,12 +11,13 @@ namespace HotelListing.Net9.API.Core.Repository;
 public class GenericRepository<T>(HotelListingDbContext context, IMapper mapper) : IGenericRepository<T>
     where T : class
 {
-    public async Task<T?> GetAsync(int? id)
+    public async Task<TResult> GetAsync<TResult>(int? id)
     {
-        if (id is null)
-            throw new NotFoundException(nameof(GetAsync), id);
+        var result = await context.Set<T>().FindAsync(id);
+        if (result is null)
+            throw new NotFoundException(typeof(T).Name, id.HasValue ? id : "No key provided.");
         
-        return await context.Set<T>().FindAsync(id);
+        return mapper.Map<TResult>(result);
     }
 
     public async Task<List<TResult>> GetAllAsync<TResult>()
@@ -44,37 +45,35 @@ public class GenericRepository<T>(HotelListingDbContext context, IMapper mapper)
         };
     }
 
-    public async Task<T> AddAsync(T entity)
+    public async Task<TResult> AddAsync<TSource, TResult>(TSource source)
     {
+        var entity = mapper.Map<T>(source);
+        
         await context.AddAsync(entity);
         await context.SaveChangesAsync();
-
-        return entity;
+        
+        return mapper.Map<TResult>(entity);
     }
 
-    public async Task UpdateAsync(T entity)
+    public async Task UpdateAsync<TSource, TResult>(int id, TSource source)
     {
-        context.Update(entity);
+        var entity = await GetAsync<TResult>(id);
+        
+        mapper.Map(source, entity);
+        context.Update(entity!);
         await context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task DeleteAsync<TResult>(int id) where TResult : class
     {
-        if (await ExistsAsync(id))
-        {
-            var entity = await GetAsync(id);
-            context.Set<T>().Remove(entity!);
-            await context.SaveChangesAsync();
-        }
-        else
-        {
-            throw new KeyNotFoundException();
-        }
+        var entity = await GetAsync<TResult>(id);
+        context.Set<TResult>().Remove(entity!);
+        await context.SaveChangesAsync();
     }
 
-    public async Task<bool> ExistsAsync(int id)
+    public async Task<bool> ExistsAsync<TResult>(int id)
     {
-        var entity = await GetAsync(id);
+        var entity = await GetAsync<TResult>(id);
         
         return entity is not null;
     }
