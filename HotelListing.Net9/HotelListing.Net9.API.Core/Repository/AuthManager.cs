@@ -4,20 +4,28 @@ using System.Text;
 using AutoMapper;
 using HotelListing.Data;
 using HotelListing.Net9.API.Core.Contracts;
+using HotelListing.Net9.API.Core.Helpers;
 using HotelListing.Net9.API.Core.Models.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 
 namespace HotelListing.Net9.API.Core.Repository;
 
-public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConfiguration configuration, ILogger<AuthManager> logger) : IAuthManager
+public class AuthManager(
+    IMapper mapper,
+    UserManager<ApiUser> userManager,
+    IConfiguration configuration,
+    ILogger<AuthManager> logger,
+    IOptions<JwtSettings> jwtOptions) : IAuthManager
 {
     private ApiUser? _user;
     private const string LoginProvider = "HotelListingApi";
     private const string RefreshToken = "RefreshToken";
+    private readonly JwtSettings JwtSettings = jwtOptions.Value;
 
     public async Task<IEnumerable<IdentityError>> Register(CreateApiUserDto userDto)
     {
@@ -56,7 +64,12 @@ public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConf
 
     private async Task<string> GenerateToken()
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]));
+        if (_user == null) throw new ArgumentException(nameof(_user));
+
+        if (string.IsNullOrEmpty(JwtSettings.Key) || JwtSettings.Key.Length < 32)
+            throw new InvalidOperationException("JWT key must be at least 32 characters long.");
+        
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSettings.Key));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var roles = await userManager.GetRolesAsync(_user);
         var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x)).ToList();
@@ -71,10 +84,11 @@ public class AuthManager(IMapper mapper, UserManager<ApiUser> userManager, IConf
         }.Union(userClaims).Union(roleClaims);
 
         var token = new JwtSecurityToken(
-            issuer: configuration["JwtSettings:Issuer"],
-            audience:configuration["JwtSettings:Audience"],
+            issuer: configuration[JwtSettings.Issuer],
+            audience:configuration[JwtSettings.Audience],
             claims: claims,
-            expires: DateTime.Now.AddMinutes(Convert.ToInt32(configuration["JwtSettings:DurationInMinutes"])),
+            notBefore: DateTime.UtcNow,
+            expires: DateTime.UtcNow.AddMinutes(Convert.ToInt32(configuration[JwtSettings.DurationInMinutes])),
             signingCredentials: credentials
             );
         
