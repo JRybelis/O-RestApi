@@ -1,6 +1,0 @@
-namespace HotelListing.Net9.Models.Users;
-
-public class GetApiUserDto : BaseApiUserDto
-{
-    public int Id { get; set; }
-}

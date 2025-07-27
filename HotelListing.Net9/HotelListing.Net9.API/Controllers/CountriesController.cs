@@ -1,9 +1,9 @@
 using AutoMapper;
-using HotelListing.Net9.Contracts;
-using HotelListing.Net9.Data;
-using HotelListing.Net9.Exceptions;
-using HotelListing.Net9.Models;
-using HotelListing.Net9.Models.Country;
+using HotelListing.Data;
+using HotelListing.Net9.API.Core.Contracts;
+using HotelListing.Net9.API.Core.Exceptions;
+using HotelListing.Net9.API.Core.Models;
+using HotelListing.Net9.API.Core.Models.Country;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;

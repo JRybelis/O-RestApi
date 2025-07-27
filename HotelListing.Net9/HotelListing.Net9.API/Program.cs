@@ -1,9 +1,9 @@
 using System.Text;
-using HotelListing.Net9.Configurations;
-using HotelListing.Net9.Contracts;
-using HotelListing.Net9.Data;
-using HotelListing.Net9.Middleware;
-using HotelListing.Net9.Repository;
+using HotelListing.Data;
+using HotelListing.Net9.API.Core.Configurations;
+using HotelListing.Net9.API.Core.Contracts;
+using HotelListing.Net9.API.Core.Middleware;
+using HotelListing.Net9.API.Core.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
